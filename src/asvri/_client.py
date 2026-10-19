@@ -118,7 +118,7 @@ class Asvri:
     """ASVRI's API. Keep the secret key on your server:
 
         asvri = Asvri(os.environ["ASVRI_SECRET_KEY"])
-        session = asvri.checkout_sessions.create(amount=2500, currency="NGN", success_url="https://…")
+        session = asvri.checkout_sessions.create(amount=25, currency="USD", success_url="https://…")
     """
 
     DEFAULT_API_BASE = DEFAULT_API_BASE

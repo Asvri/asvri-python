@@ -117,7 +117,7 @@ class AsyncAsvri:
     """The same API for asyncio:
 
         async with AsyncAsvri(os.environ["ASVRI_SECRET_KEY"]) as asvri:
-            session = await asvri.checkout_sessions.create(amount=2500, currency="NGN")
+            session = await asvri.checkout_sessions.create(amount=25, currency="USD")
     """
 
     DEFAULT_API_BASE = DEFAULT_API_BASE

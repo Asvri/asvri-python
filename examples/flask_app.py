@@ -15,7 +15,7 @@ BASE = os.environ.get("BASE_URL", "http://127.0.0.1:5000")
 @app.post("/checkout")
 def checkout():
     order_id = "1042"  # your order
-    session = asvri.checkout_sessions.create(amount=2500, currency="NGN", reference=order_id, success_url=f"{BASE}/thanks",
+    session = asvri.checkout_sessions.create(amount=25, currency="USD", reference=order_id, success_url=f"{BASE}/thanks",
                                              cancel_url=f"{BASE}/cart", metadata={"order_id": order_id},
                                              idempotency_key=f"order-{order_id}")
     return redirect(session["url"], code=303)

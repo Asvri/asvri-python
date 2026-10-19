@@ -28,8 +28,8 @@ asvri = Asvri(os.environ["ASVRI_SECRET_KEY"])
 
 ```python
 session = asvri.checkout_sessions.create(
-    amount=2500,                      # major units; or line_items=[{"name": …, "quantity": 1, "amount": …}]
-    currency="NGN",
+    amount=25,                        # major units; or line_items=[{"name": …, "quantity": 1, "amount": …}]
+    currency="USD",
     description="Order #1042",
     reference="1042",
     customer={"name": "Ada Obi", "email": "ada@example.com"},
@@ -64,7 +64,7 @@ asvri.checkout_sessions.expire(session_id)                   # close an open ses
 from asvri import AsyncAsvri
 
 async with AsyncAsvri(os.environ["ASVRI_SECRET_KEY"]) as asvri:
-    session = await asvri.checkout_sessions.create(amount=2500, currency="NGN")
+    session = await asvri.checkout_sessions.create(amount=25, currency="USD")
     async for s in asvri.checkout_sessions.list_all(status="paid"):
         ...
 ```
