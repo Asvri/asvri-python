@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asvri"
+version = "1.0.0"
+description = "ASVRI's API for Python: checkout sessions across every connected gateway, refunds, webhook endpoints and webhook signature checks."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "ASVRI" }]
+requires-python = ">=3.10"
+dependencies = []
+keywords = ["asvri", "payments", "checkout", "webhooks", "paystack", "flutterwave", "africa"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+    "Framework :: Django",
+    "Framework :: FastAPI",
+]
+
+[project.optional-dependencies]
+async = ["httpx>=0.27"]
+
+[project.urls]
+Homepage = "https://www.asvri.com/developers"
+Documentation = "https://www.asvri.com/developers/docs"
+Source = "https://github.com/asvri/asvri-python"
+Issues = "https://github.com/asvri/asvri-python/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+asvri = ["py.typed"]
