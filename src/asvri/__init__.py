@@ -1,5 +1,5 @@
-"""ASVRI's API for Python: checkout sessions that take payment through every gateway you've connected, refunds,
-webhook endpoints and webhook signature checks.
+"""ASVRI's API for Python: checkout sessions that take payment through every gateway you've connected, cards on file
+(setup sessions, saved payment methods, charges), refunds, webhook endpoints and webhook signature checks.
 
     from asvri import Asvri
     asvri = Asvri(os.environ["ASVRI_SECRET_KEY"])

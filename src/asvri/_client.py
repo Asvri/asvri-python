@@ -114,11 +114,95 @@ class WebhookEndpoints:
         return self._http.request(Request("DELETE", "webhooks", query={"id": id}))
 
 
+class SetupSessions:
+    """Cards on file, step one: a customer saves a card (or wallet) now, with nothing paid, to be charged later with
+    asvri.charges. Open the session's "url", or embed it in your page with asvri.js and its "client_secret"."""
+
+    def __init__(self, http: _Http) -> None:
+        self._http = http
+
+    def create(self, *, customer: Optional[Dict[str, str]] = None, customer_id: Optional[str] = None, gateway: Optional[str] = None,
+               payment_methods: Optional[List[str]] = None, success_url: Optional[str] = None, cancel_url: Optional[str] = None,
+               metadata: Optional[Dict[str, str]] = None, expires_in: Optional[int] = None,
+               idempotency_key: Optional[str] = None) -> Dict[str, Any]:
+        """A session for a customer ({"email", "name"}, matched to yours by email) or customer_id. The same
+        idempotency_key returns the same session (a retry, a double click); one is made for you when left out, so
+        this call is safely retried."""
+        body = params(dict(customer=customer, customer_id=customer_id, gateway=gateway, payment_methods=payment_methods,
+                           success_url=success_url, cancel_url=cancel_url, metadata=metadata, expires_in=expires_in))
+        key = idempotency_key or f"asvri-python-{uuid.uuid4().hex}"
+        return self._http.request(Request("POST", "setup_sessions", body=body, idempotency_key=key, retryable=True))
+
+    def retrieve(self, id: str) -> Dict[str, Any]:
+        """One session as ASVRI has it now. Once "completed", its "payment_method" is the saved card (pm_…)."""
+        return self._http.request(Request("GET", "setup_sessions", query={"id": id}, retryable=True))
+
+    def list(self, *, limit: Optional[int] = None, status: Optional[str] = None, customer: Optional[str] = None,
+             starting_after: Optional[str] = None) -> Dict[str, Any]:
+        """Sessions made with this key's mode, newest first; customer is cus_… or an email."""
+        return self._http.request(Request("GET", "setup_sessions", query=params(dict(limit=limit, status=status, customer=customer, starting_after=starting_after)), retryable=True))
+
+    def cancel(self, id: str) -> Dict[str, Any]:
+        """Close an open session so the card can no longer be saved through it. Not retried: after an
+        APIConnectionError, retrieve() the session instead."""
+        return self._http.request(Request("POST", "setup_sessions", query={"id": id, "action": "cancel"}))
+
+
+class PaymentMethods:
+    """The cards and wallets your customers saved (setup sessions, or checkout sessions with save_payment_method)."""
+
+    def __init__(self, http: _Http) -> None:
+        self._http = http
+
+    def retrieve(self, id: str) -> Dict[str, Any]:
+        return self._http.request(Request("GET", "payment_methods", query={"id": id}, retryable=True))
+
+    def list(self, *, customer: Optional[str] = None, limit: Optional[int] = None, include_removed: bool = False) -> Dict[str, Any]:
+        """A customer's methods (cus_… or an email), or all of them, newest first. Removed ones only with include_removed."""
+        return self._http.request(Request("GET", "payment_methods", query=params(dict(customer=customer, limit=limit, include_removed="true" if include_removed else None)), retryable=True))
+
+    def detach(self, id: str) -> Dict[str, Any]:
+        """Remove a saved method: it can't be charged again (payment_method.detached is posted). Past charges keep
+        their records. Safe to retry: removing a removed method returns it as it is."""
+        return self._http.request(Request("DELETE", "payment_methods", query={"id": id}, retryable=True))
+
+
+class Charges:
+    """Cards on file, step two: charge a saved payment method with nobody present (merchant-initiated)."""
+
+    def __init__(self, http: _Http) -> None:
+        self._http = http
+
+    def create(self, *, payment_method: str, amount: float, currency: str, description: Optional[str] = None,
+               reference: Optional[str] = None, metadata: Optional[Dict[str, str]] = None,
+               idempotency_key: Optional[str] = None) -> Dict[str, Any]:
+        """Charge a saved method now, through the gateway it was saved on. The answer is final in one call:
+        "succeeded", "failed" ("error" says why), "pending" (a webhook settles it) or "requires_action"
+        ("next_action"["url"] is a payment page for the customer).
+
+        Always pass an idempotency_key (e.g. "sub-1042-oct"): with one, ASVRI returns the same charge for the same
+        key, so the call is retried like a read. Without one the SDK never retries: a second try could charge twice."""
+        body = params(dict(payment_method=payment_method, amount=amount, currency=currency, description=description, reference=reference, metadata=metadata))
+        return self._http.request(Request("POST", "charges", body=body, idempotency_key=idempotency_key, retryable=bool(idempotency_key)))
+
+    def retrieve(self, id: str) -> Dict[str, Any]:
+        """One charge: its status, "payment" (once succeeded) and "next_action" (when the bank wants the customer)."""
+        return self._http.request(Request("GET", "charges", query={"id": id}, retryable=True))
+
+    def list(self, *, limit: Optional[int] = None, payment_method: Optional[str] = None, customer: Optional[str] = None,
+             starting_after: Optional[str] = None) -> Dict[str, Any]:
+        """Charges in this key's mode, newest first; narrow to one payment_method (pm_…) or customer (cus_… or email)."""
+        return self._http.request(Request("GET", "charges", query=params(dict(limit=limit, payment_method=payment_method, customer=customer, starting_after=starting_after)), retryable=True))
+
+
 class Asvri:
     """ASVRI's API. Keep the secret key on your server:
 
         asvri = Asvri(os.environ["ASVRI_SECRET_KEY"])
         session = asvri.checkout_sessions.create(amount=25, currency="USD", success_url="https://…")
+
+    Cards on file: asvri.setup_sessions (save a card with nothing paid), asvri.payment_methods (what was saved) and
+    asvri.charges (charge it later, with nobody present).
     """
 
     DEFAULT_API_BASE = DEFAULT_API_BASE
@@ -131,3 +215,6 @@ class Asvri:
         self.checkout_sessions = CheckoutSessions(http)
         self.refunds = Refunds(http)
         self.webhook_endpoints = WebhookEndpoints(http)
+        self.setup_sessions = SetupSessions(http)
+        self.payment_methods = PaymentMethods(http)
+        self.charges = Charges(http)

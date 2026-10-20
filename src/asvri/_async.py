@@ -113,6 +113,63 @@ class AsyncWebhookEndpoints:
         return await self._http.request(Request("DELETE", "webhooks", query={"id": id}))
 
 
+class AsyncSetupSessions:
+    def __init__(self, http: _AsyncHttp) -> None:
+        self._http = http
+
+    async def create(self, *, customer: Optional[Dict[str, str]] = None, customer_id: Optional[str] = None, gateway: Optional[str] = None,
+                     payment_methods: Optional[List[str]] = None, success_url: Optional[str] = None, cancel_url: Optional[str] = None,
+                     metadata: Optional[Dict[str, str]] = None, expires_in: Optional[int] = None,
+                     idempotency_key: Optional[str] = None) -> Dict[str, Any]:
+        body = params(dict(customer=customer, customer_id=customer_id, gateway=gateway, payment_methods=payment_methods,
+                           success_url=success_url, cancel_url=cancel_url, metadata=metadata, expires_in=expires_in))
+        key = idempotency_key or f"asvri-python-{uuid.uuid4().hex}"
+        return await self._http.request(Request("POST", "setup_sessions", body=body, idempotency_key=key, retryable=True))
+
+    async def retrieve(self, id: str) -> Dict[str, Any]:
+        return await self._http.request(Request("GET", "setup_sessions", query={"id": id}, retryable=True))
+
+    async def list(self, *, limit: Optional[int] = None, status: Optional[str] = None, customer: Optional[str] = None,
+                   starting_after: Optional[str] = None) -> Dict[str, Any]:
+        return await self._http.request(Request("GET", "setup_sessions", query=params(dict(limit=limit, status=status, customer=customer, starting_after=starting_after)), retryable=True))
+
+    async def cancel(self, id: str) -> Dict[str, Any]:
+        return await self._http.request(Request("POST", "setup_sessions", query={"id": id, "action": "cancel"}))
+
+
+class AsyncPaymentMethods:
+    def __init__(self, http: _AsyncHttp) -> None:
+        self._http = http
+
+    async def retrieve(self, id: str) -> Dict[str, Any]:
+        return await self._http.request(Request("GET", "payment_methods", query={"id": id}, retryable=True))
+
+    async def list(self, *, customer: Optional[str] = None, limit: Optional[int] = None, include_removed: bool = False) -> Dict[str, Any]:
+        return await self._http.request(Request("GET", "payment_methods", query=params(dict(customer=customer, limit=limit, include_removed="true" if include_removed else None)), retryable=True))
+
+    async def detach(self, id: str) -> Dict[str, Any]:
+        return await self._http.request(Request("DELETE", "payment_methods", query={"id": id}, retryable=True))
+
+
+class AsyncCharges:
+    def __init__(self, http: _AsyncHttp) -> None:
+        self._http = http
+
+    async def create(self, *, payment_method: str, amount: float, currency: str, description: Optional[str] = None,
+                     reference: Optional[str] = None, metadata: Optional[Dict[str, str]] = None,
+                     idempotency_key: Optional[str] = None) -> Dict[str, Any]:
+        # retried only with an idempotency key: without one, a second try could charge twice
+        body = params(dict(payment_method=payment_method, amount=amount, currency=currency, description=description, reference=reference, metadata=metadata))
+        return await self._http.request(Request("POST", "charges", body=body, idempotency_key=idempotency_key, retryable=bool(idempotency_key)))
+
+    async def retrieve(self, id: str) -> Dict[str, Any]:
+        return await self._http.request(Request("GET", "charges", query={"id": id}, retryable=True))
+
+    async def list(self, *, limit: Optional[int] = None, payment_method: Optional[str] = None, customer: Optional[str] = None,
+                   starting_after: Optional[str] = None) -> Dict[str, Any]:
+        return await self._http.request(Request("GET", "charges", query=params(dict(limit=limit, payment_method=payment_method, customer=customer, starting_after=starting_after)), retryable=True))
+
+
 class AsyncAsvri:
     """The same API for asyncio:
 
@@ -133,6 +190,9 @@ class AsyncAsvri:
         self.checkout_sessions = AsyncCheckoutSessions(self._http)
         self.refunds = AsyncRefunds(self._http)
         self.webhook_endpoints = AsyncWebhookEndpoints(self._http)
+        self.setup_sessions = AsyncSetupSessions(self._http)
+        self.payment_methods = AsyncPaymentMethods(self._http)
+        self.charges = AsyncCharges(self._http)
 
     async def aclose(self) -> None:
         """Close the connection pool (not one you passed in)."""
