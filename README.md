@@ -139,7 +139,20 @@ setup = asvri.setup_sessions.create(
 )
 ```
 
-**2. Let the customer add the card:** send them to the session's `url`, or hand its `client_secret` to the browser and embed the form in your own page with asvri.js. The gateway's own secure fields collect the card, so neither you nor ASVRI sees the number.
+**2. Let the customer add the card:** send them to the session's `url`, or pass its `setup_token` to the browser and embed the form in your own page with asvri.js. The gateway's own secure fields collect the card, so neither you nor ASVRI sees the number.
+
+```html
+<div id="card"></div>
+<script src="https://www.asvri.com/v1/asvri.js"></script>
+<script>
+  Asvri.mountCardSetup("#card", {
+    setupToken: "{{ setup.setup_token }}",   // the session's setup_token, from your server
+    onSuccess: (r) => { /* r.paymentMethod; confirm on your server (step 3) */ },
+  })
+</script>
+```
+
+The `setup_token` is a single-use token for this one add-card page, so it is safe in a browser. It is not your API key: never put your `sk_` secret key in a page. (`client_secret` is still returned with the same value, but it is deprecated.) Full guide: https://www.asvri.com/developers/cards-on-file
 
 **3. Confirm it was saved** with `retrieve` or the `payment_method.attached` webhook, never from the redirect alone:
 

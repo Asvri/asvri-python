@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asvri"
-version = "1.1.0"
+version = "1.1.1"
 description = "ASVRI's API for Python: checkout sessions across every connected gateway, cards on file (setup sessions, saved payment methods, charges), refunds, webhook endpoints and webhook signature checks."
 readme = "README.md"
 license = "MIT"
