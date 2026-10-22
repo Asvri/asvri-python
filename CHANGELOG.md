@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2 - 2026-10-22
+
+- Examples use the sample customer John Doe (john@example.com). No code changes.
+
 ## 1.1.1 - 2026-10-21
 
 - Setup sessions now carry `setup_token`: the single-use token for one add-card page, safe in a browser and never your API key. Pass it to asvri.js as `Asvri.mountCardSetup("#card", { setupToken: session.setup_token })`. `client_secret` is still returned with the same value but is deprecated. Guide: https://www.asvri.com/developers/cards-on-file

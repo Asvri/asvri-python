@@ -32,7 +32,7 @@ session = asvri.checkout_sessions.create(
     currency="USD",
     description="Order #1042",
     reference="1042",
-    customer={"name": "Ada Obi", "email": "ada@example.com"},
+    customer={"name": "John Doe", "email": "john@example.com"},
     success_url="https://yourshop.com/thanks",   # ASVRI adds ?session_id=cs_…
     cancel_url="https://yourshop.com/cart",
     metadata={"order_id": "1042"},
@@ -132,7 +132,7 @@ Save a customer's card now, with nothing paid, and charge it later with nobody p
 
 ```python
 setup = asvri.setup_sessions.create(
-    customer={"email": "ada@example.com", "name": "Ada Obi"},
+    customer={"email": "john@example.com", "name": "John Doe"},
     success_url="https://yourshop.com/account/cards?saved=1",   # ASVRI adds ?setup_session_id=ss_…
     metadata={"account": "42"},
     idempotency_key="cards-42-1",
@@ -178,7 +178,7 @@ charge = asvri.charges.create(
 Other calls:
 
 ```python
-asvri.payment_methods.list(customer="ada@example.com")   # a customer's saved cards
+asvri.payment_methods.list(customer="john@example.com")   # a customer's saved cards
 asvri.payment_methods.retrieve("pm_…")
 asvri.payment_methods.detach("pm_…")                      # it can't be charged again
 asvri.charges.retrieve("ch_…")
