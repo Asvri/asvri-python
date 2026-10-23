@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3 - 2026-10-23
+
+- Checkout sessions can have ASVRI work out the tax: `tax: "auto"` uses the business's tax rules (Payment Configuration → Tax), with `tax_behavior` ("exclusive" = amounts are before tax, "inclusive" = they include it), and optionally `customer.address` (country, state, city, postal_code) and `customer.tax_id` (EU reverse charge when the number is valid on VIES). The session's `amount` is then what the customer pays, tax included, and `tax` in the answer has the breakdown (status provisional until the customer's country is settled, final once a payment starts). Leave `tax` out and nothing changes. New keyword arguments on `checkout_sessions.create()` (sync and async): `tax`, `tax_behavior`.
+
 ## 1.1.2 - 2026-10-22
 
 - Examples use the sample customer John Doe (john@example.com). No code changes.

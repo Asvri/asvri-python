@@ -63,10 +63,11 @@ class AsyncCheckoutSessions:
                      description: Optional[str] = None, reference: Optional[str] = None, customer: Optional[Dict[str, str]] = None,
                      success_url: Optional[str] = None, cancel_url: Optional[str] = None, metadata: Optional[Dict[str, str]] = None,
                      payment_methods: Optional[List[str]] = None, expires_in: Optional[int] = None,
+                     tax: Optional[str] = None, tax_behavior: Optional[str] = None,
                      idempotency_key: Optional[str] = None) -> Dict[str, Any]:
         body = params(dict(amount=amount, line_items=line_items, currency=currency, description=description, reference=reference,
                            customer=customer, success_url=success_url, cancel_url=cancel_url, metadata=metadata,
-                           payment_methods=payment_methods, expires_in=expires_in))
+                           payment_methods=payment_methods, expires_in=expires_in, tax=tax, tax_behavior=tax_behavior))
         key = idempotency_key or f"asvri-python-{uuid.uuid4().hex}"
         return await self._http.request(Request("POST", "checkout/sessions", body=body, idempotency_key=key, retryable=True))
 
